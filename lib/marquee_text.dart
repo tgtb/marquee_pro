@@ -262,6 +262,7 @@ class _MarqueeState extends State<Marquee>
   late Duration _totalDuration;
   Duration? _linearDuration;
 
+  bool _isOverflowing = false;
   bool _running = false;
   bool _isOnPause = false;
   bool _isPaused = false;
@@ -649,12 +650,17 @@ class _MarqueeState extends State<Marquee>
       return false;
     }
 
-    if (!widget.onlyIfOverflow) return true;
     final size = context.size;
     if (size == null) return true;
 
     final mainAxisExtent =
         widget.effectiveAxis == Axis.horizontal ? size.width : size.height;
+    final isOverflowing = _measureSpanExtent() > mainAxisExtent;
+    if (isOverflowing != _isOverflowing) {
+      setState(() => _isOverflowing = isOverflowing);
+    }
+
+    if (!widget.onlyIfOverflow) return true;
     return _measureSpanExtent() > mainAxisExtent;
   }
 
@@ -818,6 +824,7 @@ class _MarqueeState extends State<Marquee>
       controller: _scrollController,
       scrollDirection: axis,
       physics: const NeverScrollableScrollPhysics(),
+      itemCount: _isOverflowing ? null : 1,
       itemBuilder: (_, index) {
         Widget child;
         if (index.isEven) {
